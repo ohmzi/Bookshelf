@@ -33,6 +33,8 @@ import androidx.navigation.toRoute
 import com.aceage.bookshelf.ui.screens.BookshelfScreen
 import com.aceage.bookshelf.ui.screens.SearchScreen
 import com.aceage.bookshelf.ui.theme.BookshelfTheme
+import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.firstOrNull
 
@@ -44,7 +46,8 @@ class MainActivity : ComponentActivity() {
     setContent {
       BookshelfTheme {
         val navController = rememberNavController()
-        Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
+          val sharedViewModel: SharedViewModel = hiltViewModel()
+          Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
           val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
           NavigationBar {
             NavigationBarItem(
@@ -52,7 +55,10 @@ class MainActivity : ComponentActivity() {
                 icon = { Image(imageVector = Icons.Filled.Search, contentDescription = null) },
                 label = { Text("Search") },
                 onClick = {
-                  navController.navigate("search")
+                    navController.navigate("search") {
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
             NavigationBarItem(
@@ -60,17 +66,20 @@ class MainActivity : ComponentActivity() {
                 icon = { Image(imageVector = Icons.Filled.Favorite, contentDescription = null) },
                 label = { Text("Bookshelf") },
                 onClick = {
-                  navController.navigate("bookshelf")
+                    navController.navigate("bookshelf") {
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
           }
         }) { p ->
           NavHost(navController, startDestination = "search") {
             composable("search") {
-              SearchScreen()
+              SearchScreen(viewModel = sharedViewModel)
             }
             composable("bookshelf") {
-              BookshelfScreen()
+              BookshelfScreen(viewModel = sharedViewModel)
             }
           }
         }

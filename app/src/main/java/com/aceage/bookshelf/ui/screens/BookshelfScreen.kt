@@ -35,12 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.aceage.bookshelf.ui.viewmodels.BookshelfViewModel
-import com.aceage.bookshelf.ui.viewmodels.SearchViewModel
-
+import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
 
 @Composable
-fun BookshelfScreen(viewModel: BookshelfViewModel = hiltViewModel()) {
+fun BookshelfScreen(viewModel: SharedViewModel) {
   Column(modifier = Modifier.padding(16.dp)) {
 
     Spacer(modifier = Modifier.height(32.dp))
@@ -48,12 +46,12 @@ fun BookshelfScreen(viewModel: BookshelfViewModel = hiltViewModel()) {
     Spacer(modifier = Modifier.height(16.dp))
 
 
-    if (viewModel.books.isNotEmpty()) {
+    if (viewModel.booksOnBookshelf.isNotEmpty()) {
       Column(modifier = Modifier
           .weight(1f)
           .verticalScroll(rememberScrollState())) {
 
-        for (book in viewModel.books) {
+        for (book in viewModel.booksOnBookshelf) {
           Row(modifier = Modifier
               .fillMaxWidth()
               .padding(8.dp),

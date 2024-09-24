@@ -35,10 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.aceage.bookshelf.ui.viewmodels.SearchViewModel
+import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
 
 @Composable
-fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
+fun SearchScreen(viewModel: SharedViewModel) {
   Column(modifier = Modifier.padding(16.dp)) {
 
     Spacer(modifier = Modifier.height(32.dp))
