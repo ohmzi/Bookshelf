@@ -1,5 +1,6 @@
 package com.aceage.bookshelf
 
+import BookshelfScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,7 +31,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.aceage.bookshelf.ui.screens.BookshelfScreen
 import com.aceage.bookshelf.ui.screens.SearchScreen
 import com.aceage.bookshelf.ui.theme.BookshelfTheme
 import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
