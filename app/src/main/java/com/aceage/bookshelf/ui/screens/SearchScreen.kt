@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.aceage.bookshelf.ui.components.BookItem
 import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
 
 @Composable
@@ -92,54 +93,13 @@ fun SearchScreen(viewModel: SharedViewModel) {
             else -> {
                 LazyColumn {
                     items(viewModel.books!!) { book ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (book.cover_i != null) {
-                                AsyncImage(
-                                    modifier = Modifier
-                                        .size(width = 50.dp, height = 75.dp)
-                                        .clip(RoundedCornerShape(4.dp)),
-                                    model = "https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg",
-                                    contentDescription = "Book cover",
-                                    contentScale = ContentScale.Fit
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .size(width = 50.dp, height = 75.dp)
-                                        .background(color = Color(0x33000000))
-                                        .clip(shape = RoundedCornerShape(4.dp))
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(text = book.title, style = MaterialTheme.typography.bodyLarge)
-                                book.author_name?.firstOrNull()?.let { author ->
-                                    Text(text = author, style = MaterialTheme.typography.bodyMedium)
-                                }
-                                book.first_publish_year?.let { year ->
-                                    Text(text = year.toString(), style = MaterialTheme.typography.bodySmall)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            val isOnBookshelf = viewModel.booksOnBookshelf.any { it.id == book.key }
-                            Icon(
-                                imageVector = if (isOnBookshelf) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                contentDescription = if (isOnBookshelf) "Remove from bookshelf" else "Add to bookshelf",
-                                modifier = Modifier.clickable(enabled = !isOnBookshelf) {
-                                    viewModel.onAddToBookshelf(book)
-                                },
-                                tint = if (isOnBookshelf) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }                    }
+                        BookItem(
+                            book = book,
+                            isOnBookshelf = viewModel.booksOnBookshelf.any { it.id == book.key },
+                            onAddToBookshelf = { viewModel.onAddToBookshelf(book) },
+                            onRemoveFromBookshelf = {  }
+                        )
+                    }
                 }
             }
         }
