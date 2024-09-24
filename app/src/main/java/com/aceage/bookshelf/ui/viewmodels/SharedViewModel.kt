@@ -20,11 +20,14 @@ class SharedViewModel @Inject constructor(
 ) : ViewModel() {
 
     var searchQuery by mutableStateOf("")
-    var books by mutableStateOf<List<Book>?>(emptyList())
+    var books by mutableStateOf<List<Book>>(emptyList())
     var booksOnBookshelf by mutableStateOf(emptyList<FavoriteBook>())
     private var searchJob: Job? = null
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
+    var currentPage by mutableStateOf(1)
+    private val booksPerPage = 20
+    private var allSearchResults = listOf<Book>()
 
     init {
         viewModelScope.launch {
@@ -34,6 +37,7 @@ class SharedViewModel @Inject constructor(
 
     fun onSearchQueryChange(query: String) {
         searchQuery = query
+        currentPage = 1
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300) // Debounce
@@ -48,6 +52,7 @@ class SharedViewModel @Inject constructor(
 
     fun onSearch(query: String) {
         viewModelScope.launch {
+            currentPage = 1
             performSearch(query)
         }
     }
@@ -59,12 +64,20 @@ class SharedViewModel @Inject constructor(
             val result = booksRepository.searchBooks(query)
             isLoading = false
             if (result != null) {
-                books = result
+                allSearchResults = result
+                books = allSearchResults.take(booksPerPage)
                 errorMessage = null
             } else {
                 books = emptyList()
                 errorMessage = "An error occurred while searching for books. Please try again."
             }
+        }
+    }
+
+    fun loadNextPage() {
+        if (currentPage * booksPerPage < allSearchResults.size) {
+            currentPage++
+            books = allSearchResults.take(currentPage * booksPerPage)
         }
     }
 
