@@ -39,7 +39,7 @@ android {
     compose = true
   }
   composeOptions {
-    kotlinCompilerExtensionVersion = "1.5.1"
+    kotlinCompilerExtensionVersion = "1.5.2"
   }
   packaging {
     resources {
@@ -75,10 +75,7 @@ dependencies {
 
   val room_version = "2.6.1"
   implementation("androidx.room:room-runtime:$room_version")
-  annotationProcessor("androidx.room:room-compiler:$room_version")
   ksp("androidx.room:room-compiler:$room_version")
-
-  // optional - Kotlin Extensions and Coroutines support for Room
   implementation("androidx.room:room-ktx:$room_version")
 
   testImplementation(libs.junit)

@@ -23,6 +23,8 @@ class SharedViewModel @Inject constructor(
     var books by mutableStateOf<List<Book>?>(emptyList())
     var booksOnBookshelf by mutableStateOf(emptyList<FavoriteBook>())
     private var searchJob: Job? = null
+    var isLoading by mutableStateOf(false)
+    var errorMessage by mutableStateOf<String?>(null)
 
     init {
         viewModelScope.launch {
@@ -39,6 +41,7 @@ class SharedViewModel @Inject constructor(
                 performSearch(query)
             } else {
                 books = emptyList()
+                errorMessage = null
             }
         }
     }
@@ -51,7 +54,17 @@ class SharedViewModel @Inject constructor(
 
     private fun performSearch(query: String) {
         viewModelScope.launch {
-            books = booksRepository.searchBooks(query)
+            isLoading = true
+            errorMessage = null
+            val result = booksRepository.searchBooks(query)
+            isLoading = false
+            if (result != null) {
+                books = result
+                errorMessage = null
+            } else {
+                books = emptyList()
+                errorMessage = "An error occurred while searching for books. Please try again."
+            }
         }
     }
 

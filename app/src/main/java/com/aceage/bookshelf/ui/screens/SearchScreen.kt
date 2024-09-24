@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -21,6 +24,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -33,7 +40,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
 
@@ -49,69 +55,93 @@ fun SearchScreen(viewModel: SharedViewModel) {
         modifier = Modifier.fillMaxWidth(),
         value = viewModel.searchQuery,
         placeholder = { Text("Search books") },
-        onValueChange = { newQuery -> viewModel.onSearchQueryChange(newQuery) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        onValueChange = { viewModel.onSearchQueryChange(it) },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { viewModel.onSearch(viewModel.searchQuery) })
+        keyboardActions = KeyboardActions(onSearch = { viewModel.onSearch(viewModel.searchQuery) }),
+        singleLine = true
     )
 
-    if (!viewModel.books.isNullOrEmpty()) {
-      Column(modifier = Modifier
-          .weight(1f)
-          .verticalScroll(rememberScrollState())) {
+        Spacer(modifier = Modifier.height(16.dp))
 
-        for (book in viewModel.books!!) {
-          Row(modifier = Modifier
-              .fillMaxWidth()
-              .padding(8.dp),
-              verticalAlignment = Alignment.CenterVertically
-          ) {
-            if (book.cover_i != null) {
-              AsyncImage(modifier = Modifier
-                  .size(width = 50.dp, height = 75.dp)
-                  .clip(RoundedCornerShape(4.dp)),
-                  model = "https://covers.openlibrary.org/b/id/" + book.cover_i + "-M.jpg",
-                  contentDescription = null,
-                  contentScale = ContentScale.Fit
-              )
-            } else {
-              Box(modifier = Modifier
-                  .size(width = 50.dp, height = 75.dp)
-                  .background(color = Color(0x33000000))
-                  .clip(shape = RoundedCornerShape(4.dp))
-              )
+        when {
+            viewModel.isLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-              Text(text = book.title)
-              if (book.author_name != null) {
-                Text(text = book.author_name.first())
-              }
-              if (book.first_publish_year != null) {
-                Text(text = book.first_publish_year.toString())
-              }
+            viewModel.errorMessage != null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = viewModel.errorMessage!!,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            val isOnBookshelf = viewModel.booksOnBookshelf.any { it.id == book.key }
-            Image(
-                modifier = Modifier.clickable(enabled = !isOnBookshelf) {
-                  viewModel.onAddToBookshelf(book)
-                },
-                imageVector = if (isOnBookshelf) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                contentDescription = null
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-          }
-          Spacer(modifier = Modifier.height(16.dp))
+            viewModel.books.isNullOrEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (viewModel.searchQuery.isEmpty()) "Search for your favorite books! :)"
+                        else "No books found. Try a different search term.",
+                        color = Color(0xAA000000),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            else -> {
+                LazyColumn {
+                    items(viewModel.books!!) { book ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (book.cover_i != null) {
+                                AsyncImage(
+                                    modifier = Modifier
+                                        .size(width = 50.dp, height = 75.dp)
+                                        .clip(RoundedCornerShape(4.dp)),
+                                    model = "https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg",
+                                    contentDescription = "Book cover",
+                                    contentScale = ContentScale.Fit
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 50.dp, height = 75.dp)
+                                        .background(color = Color(0x33000000))
+                                        .clip(shape = RoundedCornerShape(4.dp))
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = book.title, style = MaterialTheme.typography.bodyLarge)
+                                book.author_name?.firstOrNull()?.let { author ->
+                                    Text(text = author, style = MaterialTheme.typography.bodyMedium)
+                                }
+                                book.first_publish_year?.let { year ->
+                                    Text(text = year.toString(), style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            val isOnBookshelf = viewModel.booksOnBookshelf.any { it.id == book.key }
+                            Icon(
+                                imageVector = if (isOnBookshelf) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = if (isOnBookshelf) "Remove from bookshelf" else "Add to bookshelf",
+                                modifier = Modifier.clickable(enabled = !isOnBookshelf) {
+                                    viewModel.onAddToBookshelf(book)
+                                },
+                                tint = if (isOnBookshelf) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }                    }
+                }
+            }
         }
-      }
-    } else {
-      Box(modifier = Modifier
-          .fillMaxWidth()
-          .weight(1f),
-          contentAlignment = Alignment.Center
-      ) {
-        Text(text = "Search for your favorite books! :)", color = Color(0xAA000000))
-      }
     }
-  }
 }
