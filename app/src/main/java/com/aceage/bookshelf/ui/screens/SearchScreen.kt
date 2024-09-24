@@ -37,7 +37,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.aceage.bookshelf.ui.viewmodels.SearchViewModel
 
-
 @Composable
 fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
   Column(modifier = Modifier.padding(16.dp)) {
@@ -48,7 +47,8 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
 
     TextField(
         modifier = Modifier.fillMaxWidth(),
-        value = viewModel.searchQuery.takeIf { it.isNotEmpty() } ?: "Search books",
+        value = viewModel.searchQuery,
+        placeholder = { Text("Search books") },
         onValueChange = { newQuery -> viewModel.onSearchQueryChange(newQuery) },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { viewModel.onSearch(viewModel.searchQuery) })
