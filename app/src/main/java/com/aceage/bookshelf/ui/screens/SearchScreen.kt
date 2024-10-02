@@ -125,15 +125,3 @@ private fun BookList(viewModel: SharedViewModel, listState: LazyListState) {
         }
     }
 }
-
-@Composable
-private fun LoadNextPageEffect(viewModel: SharedViewModel, listState: LazyListState) {
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { lastIndex ->
-                if (lastIndex != null && lastIndex >= viewModel.books.size - 5) {
-                    viewModel.loadNextPage()
-                }
-            }
-    }
-}
