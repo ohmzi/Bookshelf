@@ -22,88 +22,117 @@ import com.aceage.bookshelf.ui.viewmodels.SharedViewModel
 fun SearchScreen(viewModel: SharedViewModel) {
     val listState = rememberLazyListState()
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        Spacer(modifier = Modifier.height(32.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        SearchHeader()
+        SearchTextField(viewModel)
+        SearchContent(viewModel, listState)
+    }
+
+    LoadNextPageEffect(viewModel, listState)
+}
+
+@Composable
+private fun SearchHeader() {
+    Spacer(modifier = Modifier.height(32.dp))
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = "Bookshelf 📚",
+        style = MaterialTheme.typography.displayMedium,
+        textAlign = TextAlign.Center
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+private fun SearchTextField(viewModel: SharedViewModel) {
+    TextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = viewModel.searchQuery,
+        placeholder = { Text("Search books") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+        onValueChange = viewModel::onSearchQueryChange,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { viewModel.onSearch(viewModel.searchQuery) }),
+        singleLine = true
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+private fun SearchContent(viewModel: SharedViewModel, listState: LazyListState) {
+    when {
+        viewModel.isLoading -> LoadingIndicator()
+        viewModel.errorMessage != null -> ErrorMessage(viewModel.errorMessage!!)
+        viewModel.books.isEmpty() -> EmptySearchResult(viewModel.searchQuery)
+        else -> BookList(viewModel, listState)
+    }
+}
+
+@Composable
+private fun LoadingIndicator() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorMessage(message: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = "Bookshelf 📚",
-            style = MaterialTheme.typography.displayMedium,
+            text = message,
+            color = MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
 
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = viewModel.searchQuery,
-            placeholder = { Text("Search books") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-            onValueChange = { viewModel.onSearchQueryChange(it) },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { viewModel.onSearch(viewModel.searchQuery) }),
-            singleLine = true
+@Composable
+private fun EmptySearchResult(searchQuery: String) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(
+            text = if (searchQuery.isEmpty()) "Search for your favorite books! :)"
+            else "No books found. Try a different search term.",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
+@Composable
+private fun BookList(viewModel: SharedViewModel, listState: LazyListState) {
+    LazyColumn(state = listState) {
+        items(viewModel.books) { book ->
+            BookItem(
+                book = book,
+                isOnBookshelf = viewModel.booksOnBookshelf.any { it.id == book.key },
+                onAddToBookshelf = { viewModel.onAddToBookshelf(book) },
+                onRemoveFromBookshelf = { }
+            )
+        }
 
-        when {
-            viewModel.isLoading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        item {
+            if (viewModel.books.size % 20 == 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     CircularProgressIndicator()
                 }
             }
-            viewModel.errorMessage != null -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = viewModel.errorMessage!!,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            viewModel.books.isEmpty() -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = if (viewModel.searchQuery.isEmpty()) "Search for your favorite books! :)"
-                        else "No books found. Try a different search term.",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            else -> {
-                LazyColumn(state = listState) {
-                    items(viewModel.books) { book ->
-                        BookItem(
-                            book = book,
-                            isOnBookshelf = viewModel.booksOnBookshelf.any { it.id == book.key },
-                            onAddToBookshelf = { viewModel.onAddToBookshelf(book) },
-                            onRemoveFromBookshelf = { }
-                        )
-                    }
-
-                    item {
-                        if (viewModel.books.size % 20 == 0) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                    }
-                }
-
-                LaunchedEffect(listState) {
-                    snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-                        .collect { lastIndex ->
-                            if (lastIndex != null && lastIndex >= viewModel.books.size - 5) {
-                                viewModel.loadNextPage()
-                            }
-                        }
-                }
-            }
         }
+    }
+}
+
+@Composable
+private fun LoadNextPageEffect(viewModel: SharedViewModel, listState: LazyListState) {
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= viewModel.books.size - 5) {
+                    viewModel.loadNextPage()
+                }
+            }
     }
 }
