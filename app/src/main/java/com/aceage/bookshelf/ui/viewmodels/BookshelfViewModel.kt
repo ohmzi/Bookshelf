@@ -17,11 +17,11 @@ class BookshelfViewModel @Inject constructor(
 ) : ViewModel() {
 
 
-  var books by mutableStateOf(emptyList<FavoriteBook>())
+    var books by mutableStateOf(emptyList<FavoriteBook>())
 
-  init {
-    viewModelScope.launch {
-      books = booksRepository.getAllOnBookshelf()
+    init {
+        viewModelScope.launch {
+            books = booksRepository.getAllOnBookshelf()
+        }
     }
-  }
 }

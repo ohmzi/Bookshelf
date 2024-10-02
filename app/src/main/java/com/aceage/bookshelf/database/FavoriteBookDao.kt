@@ -7,12 +7,12 @@ import androidx.room.Upsert
 
 @Dao
 interface FavoriteBookDao {
-  @Query("SELECT * FROM favoritebook")
-  suspend fun getAll(): List<FavoriteBook>
+    @Query("SELECT * FROM favoritebook")
+    suspend fun getAll(): List<FavoriteBook>
 
-  @Upsert
-  suspend fun insert(book: FavoriteBook)
+    @Upsert
+    suspend fun insert(book: FavoriteBook)
 
-  @Delete
-  suspend fun delete(book: FavoriteBook)
+    @Delete
+    suspend fun delete(book: FavoriteBook)
 }
